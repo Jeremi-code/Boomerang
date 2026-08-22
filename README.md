@@ -108,54 +108,11 @@ Each match includes human-readable reasons:
 
 ## Major Technical Decisions
 
-### Frontend: Vue.js 3 + TypeScript
-
-**Why Vue.js:**
-- Fast development with Composition API
-- Excellent TypeScript support
-- Small bundle size suitable for this scope
-- Vue Router for client-side navigation
-
-**Why TypeScript:**
-- Type safety for report structures
-- Better IDE support and refactoring
-- Catches errors at compile time
-
-### Backend: Supabase
-
-**Why Supabase:**
-- Instant PostgreSQL database without server setup
-- Built-in Row Level Security
-- Free tier sufficient for this assessment
-- Easy API generation from schema
-
-**Schema Design:**
-- Two tables: `lost_items` and `found_items`
-- UUID primary keys for security
-- Timestamps for temporal matching
-- Enum type for categories
-
-### Matching Algorithm: Custom Weighted Scoring
-
-**Why not use ML/embeddings:**
-- Scope is small (~3 hours)
-- No training data available
-- Weighted scoring is explainable and tunable
-- Sufficient for campus-scale data
-
-**Why these weights:**
-- Category (30%): Most discriminating factor
-- Location (25%): High signal for campus environment
-- Time (20%): Strong temporal correlation
-- Description (15%): Useful but noisy due to varying user descriptions
-- Color/Brand (5% each): Helpful when available, but often missing
-
-### Styling: Glassmorphism Design
-
-**Why glassmorphism:**
-- Modern, clean aesthetic
-- Good visual hierarchy
-- Works well with the campus/youth demographic
+1. **Vue.js 3 + TypeScript** — Fast development with type safety
+2. **Supabase** — Instant PostgreSQL database without server setup
+3. **Client-side matching** — Algorithm runs in browser; no API calls needed for matching
+4. **Weighted scoring** — Explainable and tunable approach over black-box ML
+5. **Glassmorphism UI** — Modern aesthetic suitable for campus environment
 
 ---
 
