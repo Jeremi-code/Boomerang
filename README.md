@@ -292,29 +292,14 @@ vercel
 
 ## AI Usage Disclosure
 
-**This README and code analysis were written using OpenCode Mimo v2.5.**
+I used **OpenCode Mimo v2.5** throughout development to:
 
-The AI was used for:
+- Explain algorithms like Levenshtein distance and Jaccard similarity
+- Help structure the matching logic and weighted scoring approach
+- Generate initial project scaffolding and type definitions
+- Write this README and analyze code against the specification
 
-1. **README generation** — Structured documentation following assessment requirements
-2. **Code analysis** — Systematic review of each component against specification
-3. **Algorithm explanation** — Clear documentation of matching logic and weighted scoring
-
-**How AI was used throughout development:**
-
-- **Project scaffolding** — Initial Vue.js + Vite setup
-- **Matching algorithm** — Explanation of Levenshtein distance and Jaccard similarity
-- **Type definitions** — TypeScript interfaces for reports
-- **Form validation** — Client-side validation patterns
-- **CSS styling** — Glassmorphism design implementation
-
-**What was NOT AI-generated:**
-- The weighted scoring approach and factor selection
-- The specific weights (30/25/20/15/5/5)
-- The decision to use exponential decay for temporal matching
-- The color family grouping logic
-
-The AI served as a development accelerator and documentation aid, while architectural decisions and algorithm design were made manually based on the problem requirements.
+The matching algorithm weights and overall approach were designed manually based on the problem requirements.
 
 ---
 
