@@ -106,16 +106,6 @@ Each match includes human-readable reasons:
 
 ---
 
-## Major Technical Decisions
-
-1. **Vue.js 3 + TypeScript** — Fast development with type safety
-2. **Supabase** — Instant PostgreSQL database without server setup
-3. **Client-side matching** — Algorithm runs in browser; no API calls needed for matching
-4. **Weighted scoring** — Explainable and tunable approach over black-box ML
-5. **Glassmorphism UI** — Modern aesthetic suitable for campus environment
-
----
-
 ## What I Intentionally Chose NOT to Build
 
 1. **User authentication** — Not required for the assessment scope. Could be added for tracking personal reports.
