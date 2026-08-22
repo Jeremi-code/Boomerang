@@ -8,17 +8,52 @@ import {
   Zap, 
   ArrowRight,
   CheckCircle2,
-  Cpu,
-  Sparkles
+  Sparkles,
+  Headphones,
+  KeyRound,
+  Shirt,
+  Watch,
+  ShoppingBag,
+  FileText
 } from 'lucide-vue-next'
 
 const categories = [
-  { name: 'Electronics', icon: '🎧', desc: 'Laptops, Earbuds, Chargers' },
-  { name: 'Keys', icon: '🔑', desc: 'Keychains, Fobs, Lanyards' },
-  { name: 'Clothing', icon: '👕', desc: 'Jackets, Hoodies, Hats' },
-  { name: 'Accessories', icon: '⌚', desc: 'Watches, Jewelry, Glasses' },
-  { name: 'Bags', icon: '🎒', desc: 'Backpacks, Wallets, Pouches' },
-  { name: 'Documents', icon: '📄', desc: 'IDs, Passports, Notebooks' }
+  { 
+    name: 'Electronics', 
+    icon: Headphones, 
+    desc: 'Laptops, Earbuds, Chargers',
+    bgClass: 'cat-icon-electronics'
+  },
+  { 
+    name: 'Keys', 
+    icon: KeyRound, 
+    desc: 'Keychains, Fobs, Lanyards',
+    bgClass: 'cat-icon-keys'
+  },
+  { 
+    name: 'Clothing', 
+    icon: Shirt, 
+    desc: 'Jackets, Hoodies, Hats',
+    bgClass: 'cat-icon-clothing'
+  },
+  { 
+    name: 'Accessories', 
+    icon: Watch, 
+    desc: 'Watches, Jewelry, Glasses',
+    bgClass: 'cat-icon-accessories'
+  },
+  { 
+    name: 'Bags', 
+    icon: ShoppingBag, 
+    desc: 'Backpacks, Wallets, Pouches',
+    bgClass: 'cat-icon-bags'
+  },
+  { 
+    name: 'Documents', 
+    icon: FileText, 
+    desc: 'IDs, Passports, Notebooks',
+    bgClass: 'cat-icon-documents'
+  }
 ]
 </script>
 
@@ -75,15 +110,11 @@ const categories = [
       </div>
     </section>
 
-    <!-- Workflow Section -->
+    <!-- How it Works Section -->
     <section class="workflow-section">
       <div class="section-header">
-        <div class="section-tag">
-          <Cpu class="tag-icon" />
-          <span>How It Works</span>
-        </div>
-        <h2>Automated Matching in 3 Simple Steps</h2>
-        <p>Boomerang eliminates manual searching with automated multi-factor similarity scoring.</p>
+        <h2>How Boomerang Works</h2>
+        <p>A simple 3-step automated matching pipeline designed for fast campus reunions.</p>
       </div>
 
       <div class="steps-grid">
@@ -92,8 +123,8 @@ const categories = [
           <div class="step-icon-bg">
             <Search class="step-icon" />
           </div>
-          <h3>1. File a Report</h3>
-          <p>Submit item details such as description, brand, color, date, and approximate location.</p>
+          <h3>1. Submit Item Report</h3>
+          <p>Provide details like category, description, date, color, brand, and exact location.</p>
         </div>
 
         <div class="step-card card card-elevated">
@@ -129,7 +160,9 @@ const categories = [
           :key="cat.name" 
           class="category-card card card-elevated"
         >
-          <span class="cat-emoji">{{ cat.icon }}</span>
+          <div class="cat-icon-bg" :class="cat.bgClass">
+            <component :is="cat.icon" class="cat-icon" />
+          </div>
           <div class="cat-info">
             <h4 class="cat-name">{{ cat.name }}</h4>
             <p class="cat-desc">{{ cat.desc }}</p>
@@ -178,26 +211,6 @@ const categories = [
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.45rem 1.1rem;
-  background-color: var(--primary-light);
-  border: 1px solid var(--primary-border);
-  border-radius: 9999px;
-  font-size: 0.85rem;
-  color: var(--primary-600);
-  font-weight: 700;
-  margin-bottom: 1.75rem;
-}
-
-.badge-icon {
-  width: 16px;
-  height: 16px;
-  color: var(--primary-500);
 }
 
 .hero-title {
@@ -286,67 +299,62 @@ const categories = [
   margin: 0 auto;
 }
 
-.section-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.775rem;
-  font-weight: 800;
-  color: var(--primary-600);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 0.5rem;
-}
-
-.tag-icon {
-  width: 15px;
-  height: 15px;
-}
-
 .section-header h2 {
+  font-size: 2rem;
   margin-bottom: 0.5rem;
 }
 
 .steps-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+  gap: 1.75rem;
 }
 
 .step-card {
-  padding: 2rem;
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  align-items: flex-start;
+  padding: 2rem;
 }
 
 .step-num {
   position: absolute;
   top: 1.5rem;
   right: 1.5rem;
-  font-family: var(--font-mono);
-  font-size: 1.5rem;
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
   font-weight: 800;
-  color: var(--text-dim);
-  opacity: 0.4;
+  color: var(--border-card);
+  line-height: 1;
 }
 
 .step-icon-bg {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   background-color: var(--primary-light);
   border: 1px solid var(--primary-border);
+  color: var(--primary-600);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-600);
+  margin-bottom: 1.25rem;
 }
 
 .step-icon {
   width: 24px;
   height: 24px;
+}
+
+.step-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.step-card p {
+  font-size: 0.9rem;
+  line-height: 1.6;
 }
 
 /* Categories Grid */
@@ -369,8 +377,56 @@ const categories = [
   padding: 1.25rem;
 }
 
-.cat-emoji {
-  font-size: 2rem;
+.cat-icon-bg {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+}
+
+.cat-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.cat-icon-electronics {
+  background-color: #eef2ff;
+  border-color: #c7d2fe;
+  color: #4f46e5;
+}
+
+.cat-icon-keys {
+  background-color: #fffbeb;
+  border-color: #fde68a;
+  color: #d97706;
+}
+
+.cat-icon-clothing {
+  background-color: #fff1f2;
+  border-color: #fecdd3;
+  color: #e11d48;
+}
+
+.cat-icon-accessories {
+  background-color: #faf5ff;
+  border-color: #e9d5ff;
+  color: #9333ea;
+}
+
+.cat-icon-bags {
+  background-color: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #059669;
+}
+
+.cat-icon-documents {
+  background-color: #ecfeff;
+  border-color: #a5f3fc;
+  color: #0891b2;
 }
 
 .cat-name {
