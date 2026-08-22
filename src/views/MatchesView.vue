@@ -788,11 +788,13 @@ onMounted(() => {
   border-radius: 3px;
   background: var(--bg-hover);
   outline: none;
+  appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
 }
 
 .custom-range-slider::-webkit-slider-thumb {
+  appearance: none;
   -webkit-appearance: none;
   width: 18px;
   height: 18px;
@@ -1350,8 +1352,64 @@ onMounted(() => {
 .icon-sm { width: 16px; height: 16px; }
 
 @media (max-width: 768px) {
+  .matches-page {
+    padding: 1.5rem 1rem 4rem;
+    gap: 1.5rem;
+  }
+
+  .matches-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-stats-chips {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .stat-chip {
+    flex: 1;
+    padding: 0.5rem 0.5rem;
+  }
+
+  .chip-label {
+    font-size: 0.65rem;
+  }
+
+  .chip-val {
+    font-size: 1.1rem;
+  }
+
+  .controls-grid {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .control-box {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .view-mode-toggle {
+    width: 100%;
+  }
+
+  .view-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
   .comparison-row { grid-template-columns: 1fr; }
   .modal-pair-summary { grid-template-columns: 1fr; }
   .summary-divider { width: 100%; height: 1px; }
+
+  .empty-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .empty-actions .btn {
+    width: 100%;
+  }
 }
 </style>
