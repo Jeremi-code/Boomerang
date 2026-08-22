@@ -228,21 +228,9 @@ const categories = [
   text-align: left;
   position: relative;
   overflow: hidden;
+  border: none !important;
+  box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.05);
 }
-
-.cta-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  transition: all 0.3s ease;
-}
-
-.cta-lost::before { background-color: var(--lost-500); }
-.cta-found::before { background-color: var(--found-500); }
-.cta-matches::before { background-color: var(--primary-500); }
 
 .cta-icon-box {
   width: 50px;
