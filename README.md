@@ -235,7 +235,15 @@ Each match includes human-readable reasons:
 
 ---
 
-## Setup Instructions
+## Live Demo
+
+🔗 **[https://boomerang-matcher.vercel.app](https://boomerang-matcher.vercel.app)**
+
+---
+
+## Local Development (Optional)
+
+If you want to run the project locally:
 
 ### Prerequisites
 - Node.js 18+
