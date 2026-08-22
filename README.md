@@ -241,8 +241,8 @@ If you want to run the project locally:
 
 ### 1. Clone and install
 ```bash
-git clone https://github.com/your-username/boomerang-matcher.git
-cd boomerang-matcher
+git clone https://github.com/Jeremi-code/Boomerang.git
+cd Boomerang
 npm install
 ```
 
