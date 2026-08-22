@@ -1,5 +1,14 @@
 import type { LostReport, FoundReport, MatchResult } from '@/types'
 
+/**
+ * Calculates the Levenshtein distance between two strings.
+ * This is the minimum number of single-character edits (insertions, deletions, or substitutions)
+ * required to change one string into the other.
+ *
+ * @param a - First string to compare
+ * @param b - Second string to compare
+ * @returns The edit distance between the two strings
+ */
 function levenshteinDistance(a: string, b: string): number {
   const m = a.length
   const n = b.length
@@ -31,6 +40,14 @@ function levenshteinDistance(a: string, b: string): number {
   return matrix[m][n]
 }
 
+/**
+ * Calculates a similarity score between two strings based on Levenshtein distance.
+ * Returns a value between 0 (completely different) and 1 (identical).
+ *
+ * @param a - First string to compare
+ * @param b - Second string to compare
+ * @returns Similarity score from 0 to 1
+ */
 function stringSimilarity(a: string, b: string): number {
   if (a === b) return 1
   if (a.length === 0 || b.length === 0) return 0
@@ -40,6 +57,14 @@ function stringSimilarity(a: string, b: string): number {
   return 1 - (distance / maxLength)
 }
 
+/**
+ * Calculates keyword overlap between two texts using Jaccard similarity.
+ * Splits texts into words, filters short words (< 3 chars), and computes intersection/union.
+ *
+ * @param text1 - First text to compare
+ * @param text2 - Second text to compare
+ * @returns Jaccard similarity score from 0 to 1
+ */
 function keywordOverlap(text1: string, text2: string): number {
   const words1 = new Set(text1.toLowerCase().split(/\s+/).filter(w => w.length > 2))
   const words2 = new Set(text2.toLowerCase().split(/\s+/).filter(w => w.length > 2))
@@ -57,6 +82,14 @@ function keywordOverlap(text1: string, text2: string): number {
   return intersection / union
 }
 
+/**
+ * Calculates temporal similarity between two dates using exponential decay.
+ * Same day returns 1, 30+ days returns 0. Half-life is approximately 5 days.
+ *
+ * @param date1 - ISO date string for first event
+ * @param date2 - ISO date string for second event
+ * @returns Temporal similarity score from 0 to 1
+ */
 function temporalSimilarity(date1: string, date2: string): number {
   const d1 = new Date(date1)
   const d2 = new Date(date2)
@@ -70,6 +103,15 @@ function temporalSimilarity(date1: string, date2: string): number {
   return Math.exp(-diffDays / 7)
 }
 
+/**
+ * Calculates location similarity using fuzzy matching.
+ * Checks for exact match, substring containment, common location keywords,
+ * and falls back to string similarity.
+ *
+ * @param loc1 - First location string
+ * @param loc2 - Second location string
+ * @returns Location similarity score from 0 to 1
+ */
 function locationSimilarity(loc1: string, loc2: string): number {
   const normalize = (s: string) => s.toLowerCase().trim()
   
@@ -94,10 +136,25 @@ function locationSimilarity(loc1: string, loc2: string): number {
   return stringSimilarity(l1, l2) * 0.5
 }
 
+/**
+ * Performs exact match comparison between two category strings.
+ *
+ * @param cat1 - First category string
+ * @param cat2 - Second category string
+ * @returns 1 if categories match, 0 otherwise
+ */
 function categoryMatch(cat1: string, cat2: string): number {
   return cat1 === cat2 ? 1 : 0
 }
 
+/**
+ * Calculates color similarity with fuzzy family matching.
+ * Groups similar colors (e.g., black/charcoal/navy) and returns higher scores for same family.
+ *
+ * @param color1 - First color string (can be null/undefined)
+ * @param color2 - Second color string (can be null/undefined)
+ * @returns Color similarity score from 0.2 to 1, with 0.5 for missing values
+ */
 function colorSimilarity(color1: string | null | undefined, color2: string | null | undefined): number {
   if (!color1 || !color2) return 0.5
 
@@ -123,12 +180,28 @@ function colorSimilarity(color1: string | null | undefined, color2: string | nul
   return 0.2
 }
 
+/**
+ * Calculates brand match score using string similarity.
+ *
+ * @param brand1 - First brand string (can be null/undefined)
+ * @param brand2 - Second brand string (can be null/undefined)
+ * @returns Brand similarity score from 0 to 1, with 0.5 for missing values
+ */
 function brandMatch(brand1: string | null | undefined, brand2: string | null | undefined): number {
   if (!brand1 || !brand2) return 0.5
 
   return stringSimilarity(brand1, brand2)
 }
 
+/**
+ * Calculates a match score between a lost item and a found item.
+ * Uses weighted factors: category (30%), location (25%), time (20%),
+ * description (15%), color (5%), brand (5%).
+ *
+ * @param lost - The lost item report
+ * @param found - The found item report
+ * @returns MatchResult with score (0-100%) and reasons for the match
+ */
 export function calculateMatchScore(
   lost: LostReport,
   found: FoundReport
@@ -189,6 +262,15 @@ export function calculateMatchScore(
   }
 }
 
+/**
+ * Finds all matching pairs between lost and found items above a minimum score threshold.
+ * Compares every lost item against every found item and returns sorted results.
+ *
+ * @param lostItems - Array of lost item reports
+ * @param foundItems - Array of found item reports
+ * @param minScore - Minimum score threshold (default: 30)
+ * @returns Array of MatchResult objects sorted by score (best first)
+ */
 export function findMatches(
   lostItems: LostReport[],
   foundItems: FoundReport[],
