@@ -16,7 +16,9 @@ import {
   Info,
   ShieldCheck,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  PlusCircle,
+  HeartHandshake
 } from 'lucide-vue-next'
 import type { LostReport, FoundReport, MatchResult } from '@/types'
 import { findMatches, calculateMatchScore } from '@/utils/matching'
@@ -41,103 +43,6 @@ const expandedLostItems = ref<Record<string, boolean>>({})
 const selectedMatch = ref<MatchResult | null>(null)
 const showModal = ref(false)
 const copiedField = ref<string>('')
-
-// Fallback Sample Data
-const sampleLostItems: LostReport[] = [
-  {
-    id: 'lost-1',
-    description: 'Black AirPods Pro in a matte silicone case with a small carabiner attached.',
-    category: 'electronics',
-    color: 'Black',
-    brand: 'Apple',
-    location: 'University Library 2nd Floor Study Room',
-    dateLost: new Date(Date.now() - 86400000 * 1).toISOString(),
-    contactEmail: 'alex.developer@example.edu',
-    contactPhone: '+1 (555) 234-5678',
-    additionalNotes: 'Left on the desk near the window row.',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'lost-2',
-    description: 'Brown leather bi-fold wallet containing student ID card and transit pass.',
-    category: 'accessories',
-    color: 'Brown',
-    brand: 'Fossil',
-    location: 'Campus Dining Hall / Student Union',
-    dateLost: new Date(Date.now() - 86400000 * 3).toISOString(),
-    contactEmail: 'sarah.j@example.edu',
-    contactPhone: '+1 (555) 876-5432',
-    additionalNotes: 'Monogrammed initials S.J. inside.',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'lost-3',
-    description: 'Honda car keys with a red nylon lanyard and a metal gym tag.',
-    category: 'keys',
-    color: 'Red',
-    brand: 'Honda',
-    location: 'North Quad Recreation Field / Gym',
-    dateLost: new Date(Date.now() - 86400000 * 2).toISOString(),
-    contactEmail: 'david.m@example.edu',
-    contactPhone: '+1 (555) 345-6789',
-    additionalNotes: 'Has a small silver whistle attached.',
-    createdAt: new Date().toISOString()
-  }
-]
-
-const sampleFoundItems: FoundReport[] = [
-  {
-    id: 'found-1',
-    description: 'AirPods Pro with black protective case and metal clip found on study desk.',
-    category: 'electronics',
-    color: 'Black',
-    brand: 'Apple',
-    locationFound: 'Library Main Desk / 2nd Floor',
-    dateFound: new Date(Date.now() - 86400000 * 1).toISOString(),
-    contactEmail: 'library.lostfound@example.edu',
-    contactPhone: '+1 (555) 999-1122',
-    additionalNotes: 'Turned in to 2nd floor receptionist.',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'found-1b',
-    description: 'Black earbud case found on sofa in cafeteria lounge.',
-    category: 'electronics',
-    color: 'Black',
-    brand: '',
-    locationFound: 'Student Cafeteria Lounge',
-    dateFound: new Date(Date.now() - 86400000 * 2).toISOString(),
-    contactEmail: 'cafeteria.lost@example.edu',
-    additionalNotes: 'Held at cashier station.',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'found-2',
-    description: 'Genuine leather wallet in dark brown color with ID card inside.',
-    category: 'accessories',
-    color: 'Brown',
-    brand: 'Fossil',
-    locationFound: 'Student Union Cafeteria Booth',
-    dateFound: new Date(Date.now() - 86400000 * 2.5).toISOString(),
-    contactEmail: 'cafeteria.staff@example.edu',
-    contactPhone: '+1 (555) 999-3344',
-    additionalNotes: 'Held securely at manager counter office.',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'found-3',
-    description: 'Black Honda key fob with red lanyard left on bench.',
-    category: 'keys',
-    color: 'Red',
-    brand: 'Honda',
-    locationFound: 'Gym Entrance Outdoor Bench',
-    dateFound: new Date(Date.now() - 86400000 * 2).toISOString(),
-    contactEmail: 'rec.center@example.edu',
-    contactPhone: '+1 (555) 999-5566',
-    additionalNotes: 'Turned in to Gym Front Desk security.',
-    createdAt: new Date().toISOString()
-  }
-]
 
 const categoryIconMap: Record<string, string> = {
   electronics: '🎧',
@@ -169,13 +74,23 @@ const loadData = async () => {
   error.value = ''
   
   try {
-    const { data: lostData } = await supabase.from('lost_items').select('*').order('created_at', { ascending: false })
-    const { data: foundData } = await supabase.from('found_items').select('*').order('created_at', { ascending: false })
+    const { data: lostData, error: lostErr } = await supabase
+      .from('lost_items')
+      .select('*')
+      .order('created_at', { ascending: false })
+      
+    const { data: foundData, error: foundErr } = await supabase
+      .from('found_items')
+      .select('*')
+      .order('created_at', { ascending: false })
     
+    if (lostErr) throw lostErr
+    if (foundErr) throw foundErr
+
     let dbLost: LostReport[] = []
     let dbFound: FoundReport[] = []
     
-    if (lostData && lostData.length > 0) {
+    if (lostData) {
       dbLost = lostData.map(item => ({
         id: item.id,
         description: item.description,
@@ -191,7 +106,7 @@ const loadData = async () => {
       }))
     }
     
-    if (foundData && foundData.length > 0) {
+    if (foundData) {
       dbFound = foundData.map(item => ({
         id: item.id,
         description: item.description,
@@ -207,8 +122,8 @@ const loadData = async () => {
       }))
     }
 
-    lostItems.value = dbLost.length > 0 ? dbLost : sampleLostItems
-    foundItems.value = dbFound.length > 0 ? dbFound : sampleFoundItems
+    lostItems.value = dbLost
+    foundItems.value = dbFound
 
     // Expand all lost items by default
     lostItems.value.forEach(item => {
@@ -216,14 +131,13 @@ const loadData = async () => {
     })
 
     recalculateMatches()
-  } catch (err) {
-    console.warn('DB load warning, fallback to sample items:', err)
-    lostItems.value = sampleLostItems
-    foundItems.value = sampleFoundItems
-    lostItems.value.forEach(item => {
-      expandedLostItems.value[item.id] = true
-    })
-    recalculateMatches()
+  } catch (err: unknown) {
+    const errObj = err as Error
+    console.error('Database load error:', errObj)
+    error.value = errObj.message || 'Failed to load reports from database. Please check Supabase setup.'
+    lostItems.value = []
+    foundItems.value = []
+    matches.value = []
   } finally {
     isLoading.value = false
   }
@@ -277,7 +191,7 @@ const groupedMatches = computed<GroupedLostMatch[]>(() => {
         candidateMatches
       }
     })
-    .filter((g): g is GroupedLostMatch => g !== null && g.candidateMatches.length > 0)
+    .filter((g): g is GroupedLostMatch => g !== null)
 })
 
 // Flat list for pair view
@@ -426,18 +340,41 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- State Displays -->
-    <div v-if="isLoading" class="loading-state card">
-      <div class="spinner"></div>
-      <p>Analyzing item attributes & ranking candidate matches...</p>
+    <!-- Error State -->
+    <div v-if="error" class="alert alert-error">
+      <span>{{ error }}</span>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="isLoading" class="loading-state card">
+      <div class="spinner"></div>
+      <p>Fetching real-time data from Supabase database...</p>
+    </div>
+
+    <!-- Completely Empty Database State -->
+    <div v-else-if="lostItems.length === 0 && foundItems.length === 0" class="empty-state card">
+      <Info class="empty-icon" />
+      <h3>No Database Reports Yet</h3>
+      <p>There are no reported lost or found items in Supabase yet. Submit a lost or found report to test real matching!</p>
+      <div class="empty-actions">
+        <RouterLink to="/lost" class="btn btn-lost btn-sm">
+          <PlusCircle class="icon-xs" />
+          <span>Report Lost Belonging</span>
+        </RouterLink>
+        <RouterLink to="/found" class="btn btn-found btn-sm">
+          <HeartHandshake class="icon-xs" />
+          <span>Report Found Belonging</span>
+        </RouterLink>
+      </div>
+    </div>
+
+    <!-- No Grouped Matches State -->
     <div v-else-if="viewMode === 'grouped' && groupedMatches.length === 0" class="empty-state card">
       <Info class="empty-icon" />
-      <h3>No Matches Found</h3>
-      <p>No candidate found items matched your criteria with &ge; {{ minScore }}% score.</p>
-      <button @click="minScore = 20; searchQuery = ''; selectedCategory = 'all'" class="btn btn-secondary btn-sm">
-        Reset Filters
+      <h3>No Candidate Matches</h3>
+      <p>No lost reports currently match any found items with &ge; {{ minScore }}% similarity.</p>
+      <button @click="minScore = 10; searchQuery = ''; selectedCategory = 'all'" class="btn btn-secondary btn-sm">
+        Lower Threshold to 10%
       </button>
     </div>
 
@@ -457,7 +394,7 @@ onMounted(() => {
                 {{ categoryIconMap[group.lostItem.category] || '📦' }} {{ group.lostItem.category }}
               </span>
               <span class="candidates-count-pill">
-                {{ group.candidateMatches.length }} Found Candidate{{ group.candidateMatches.length > 1 ? 's' : '' }} Ranked
+                {{ group.candidateMatches.length }} Found Candidate{{ group.candidateMatches.length !== 1 ? 's' : '' }} Ranked
               </span>
             </div>
 
@@ -483,7 +420,11 @@ onMounted(() => {
             <h4>Ranked Found Items (Sorted by Score)</h4>
           </div>
 
-          <div class="candidates-list">
+          <div v-if="group.candidateMatches.length === 0" class="no-candidates-box">
+            <p class="text-muted">No found items scored above {{ minScore }}% match for this report.</p>
+          </div>
+
+          <div v-else class="candidates-list">
             <div
               v-for="(match, candidateIdx) in group.candidateMatches"
               :key="`${match.lostReport.id}-${match.foundReport.id}`"
@@ -535,7 +476,14 @@ onMounted(() => {
 
     <!-- PAIRS VIEW (Individual Side-by-Side Cards) -->
     <div v-else class="matches-list pairs">
+      <div v-if="filteredPairMatches.length === 0" class="empty-state card">
+        <Info class="empty-icon" />
+        <h3>No Pair Matches</h3>
+        <p>No individual item pairs scored &ge; {{ minScore }}% match.</p>
+      </div>
+
       <div
+        v-else
         v-for="(match, index) in filteredPairMatches"
         :key="`${match.lostReport.id}-${match.foundReport.id}`"
         class="match-card card card-elevated"
@@ -865,6 +813,20 @@ onMounted(() => {
 }
 
 .empty-icon { width: 40px; height: 40px; color: var(--text-muted); }
+
+.empty-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.no-candidates-box {
+  padding: 1rem;
+  background: var(--bg-app);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
 
 .spinner {
   width: 36px;
