@@ -63,7 +63,7 @@ const submitForm = async () => {
   isSubmitting.value = true
   
   try {
-    const { data, error: supabaseError } = await supabase
+    const { error: supabaseError } = await supabase
       .from('found_items')
       .insert({
         description: form.value.description.trim(),

@@ -127,7 +127,7 @@ function categoryMatch(cat1: string, cat2: string): number {
 /**
  * Calculate color similarity
  */
-function colorSimilarity(color1: string | null, color2: string | null): number {
+function colorSimilarity(color1: string | null | undefined, color2: string | null | undefined): number {
   if (!color1 || !color2) return 0.5 // Neutral if either is missing
   
   // Exact match
@@ -157,7 +157,7 @@ function colorSimilarity(color1: string | null, color2: string | null): number {
 /**
  * Calculate brand match score
  */
-function brandMatch(brand1: string | null, brand2: string | null): number {
+function brandMatch(brand1: string | null | undefined, brand2: string | null | undefined): number {
   if (!brand1 || !brand2) return 0.5 // Neutral if either is missing
   
   return stringSimilarity(brand1, brand2)

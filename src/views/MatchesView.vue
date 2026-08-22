@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import type { LostReport, FoundReport, MatchResult } from '@/types'
 import { findMatches } from '@/utils/matching'
 import { supabase } from '@/utils/supabase'
