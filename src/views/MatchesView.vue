@@ -11,14 +11,15 @@ import {
   X, 
   Copy, 
   Filter, 
-  Grid, 
   Columns,
+  ListOrdered,
   Info,
   ShieldCheck,
-  RotateCcw
+  ChevronDown,
+  ChevronUp
 } from 'lucide-vue-next'
 import type { LostReport, FoundReport, MatchResult } from '@/types'
-import { findMatches } from '@/utils/matching'
+import { findMatches, calculateMatchScore } from '@/utils/matching'
 import { supabase } from '@/utils/supabase'
 
 const lostItems = ref<LostReport[]>([])
@@ -31,14 +32,17 @@ const error = ref('')
 const minScore = ref(30)
 const searchQuery = ref('')
 const selectedCategory = ref<string>('all')
-const viewMode = ref<'side-by-side' | 'grid'>('side-by-side')
+const viewMode = ref<'grouped' | 'pairs'>('grouped')
+
+// Expanded Lost Items in Grouped View (all open by default)
+const expandedLostItems = ref<Record<string, boolean>>({})
 
 // Modal State
 const selectedMatch = ref<MatchResult | null>(null)
 const showModal = ref(false)
 const copiedField = ref<string>('')
 
-// Realistic Fallback Data (Guarantees rich display if DB is unpopulated)
+// Fallback Sample Data
 const sampleLostItems: LostReport[] = [
   {
     id: 'lost-1',
@@ -93,6 +97,18 @@ const sampleFoundItems: FoundReport[] = [
     contactEmail: 'library.lostfound@example.edu',
     contactPhone: '+1 (555) 999-1122',
     additionalNotes: 'Turned in to 2nd floor receptionist.',
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'found-1b',
+    description: 'Black earbud case found on sofa in cafeteria lounge.',
+    category: 'electronics',
+    color: 'Black',
+    brand: '',
+    locationFound: 'Student Cafeteria Lounge',
+    dateFound: new Date(Date.now() - 86400000 * 2).toISOString(),
+    contactEmail: 'cafeteria.lost@example.edu',
+    additionalNotes: 'Held at cashier station.',
     createdAt: new Date().toISOString()
   },
   {
@@ -194,11 +210,19 @@ const loadData = async () => {
     lostItems.value = dbLost.length > 0 ? dbLost : sampleLostItems
     foundItems.value = dbFound.length > 0 ? dbFound : sampleFoundItems
 
+    // Expand all lost items by default
+    lostItems.value.forEach(item => {
+      expandedLostItems.value[item.id] = true
+    })
+
     recalculateMatches()
   } catch (err) {
     console.warn('DB load warning, fallback to sample items:', err)
     lostItems.value = sampleLostItems
     foundItems.value = sampleFoundItems
+    lostItems.value.forEach(item => {
+      expandedLostItems.value[item.id] = true
+    })
     recalculateMatches()
   } finally {
     isLoading.value = false
@@ -209,7 +233,55 @@ const recalculateMatches = () => {
   matches.value = findMatches(lostItems.value, foundItems.value, 0)
 }
 
-const filteredMatches = computed(() => {
+// Grouped by Lost Item computation
+interface GroupedLostMatch {
+  lostItem: LostReport
+  candidateMatches: MatchResult[]
+}
+
+const groupedMatches = computed<GroupedLostMatch[]>(() => {
+  return lostItems.value
+    .map(lost => {
+      // Category filter check
+      if (selectedCategory.value !== 'all' && lost.category !== selectedCategory.value) {
+        return null
+      }
+
+      // Calculate matches against all found items
+      const candidateMatches = foundItems.value
+        .map(found => calculateMatchScore(lost, found))
+        .filter(m => m.score >= minScore.value)
+        .sort((a, b) => b.score - a.score)
+
+      // Search query filter check
+      if (searchQuery.value.trim() !== '') {
+        const q = searchQuery.value.toLowerCase()
+        const lostMatchesSearch = `${lost.description} ${lost.brand || ''} ${lost.location}`.toLowerCase().includes(q)
+        
+        const filteredCandidates = candidateMatches.filter(m => 
+          `${m.foundReport.description} ${m.foundReport.brand || ''} ${m.foundReport.locationFound}`.toLowerCase().includes(q)
+        )
+
+        if (!lostMatchesSearch && filteredCandidates.length === 0) {
+          return null
+        }
+
+        return {
+          lostItem: lost,
+          candidateMatches: lostMatchesSearch ? candidateMatches : filteredCandidates
+        }
+      }
+
+      return {
+        lostItem: lost,
+        candidateMatches
+      }
+    })
+    .filter((g): g is GroupedLostMatch => g !== null && g.candidateMatches.length > 0)
+})
+
+// Flat list for pair view
+const filteredPairMatches = computed(() => {
   return matches.value.filter(m => {
     if (m.score < minScore.value) return false
     
@@ -229,6 +301,10 @@ const filteredMatches = computed(() => {
     return true
   })
 })
+
+const toggleLostItemExpand = (id: string) => {
+  expandedLostItems.value[id] = !expandedLostItems.value[id]
+}
 
 const openMatchModal = (match: MatchResult) => {
   selectedMatch.value = match
@@ -259,7 +335,7 @@ onMounted(() => {
     <div class="matches-header">
       <div class="header-title-box">
         <h1>Potential <span class="gradient-text">Item Matches</span></h1>
-        <p>Calculated similarity scores pairing reported lost items with reported found items.</p>
+        <p>Found items ranked by match score for each reported lost item.</p>
       </div>
 
       <div class="header-stats-chips">
@@ -272,8 +348,8 @@ onMounted(() => {
           <span class="chip-val gradient-text-found">{{ foundItems.length }}</span>
         </div>
         <div class="stat-chip card">
-          <span class="chip-label">Live Matches</span>
-          <span class="chip-val gradient-text">{{ filteredMatches.length }}</span>
+          <span class="chip-label">Matched Groups</span>
+          <span class="chip-val gradient-text">{{ groupedMatches.length }}</span>
         </div>
       </div>
     </div>
@@ -314,17 +390,19 @@ onMounted(() => {
         <div class="view-mode-toggle">
           <button
             class="view-btn"
-            :class="{ active: viewMode === 'side-by-side' }"
-            @click="viewMode = 'side-by-side'"
+            :class="{ active: viewMode === 'grouped' }"
+            @click="viewMode = 'grouped'"
+            title="Grouped by Lost Item"
           >
-            <Columns class="icon-xs" /> Side-by-Side
+            <ListOrdered class="icon-xs" /> Grouped by Lost Item
           </button>
           <button
             class="view-btn"
-            :class="{ active: viewMode === 'grid' }"
-            @click="viewMode = 'grid'"
+            :class="{ active: viewMode === 'pairs' }"
+            @click="viewMode = 'pairs'"
+            title="Individual Pairs View"
           >
-            <Grid class="icon-xs" /> Grid View
+            <Columns class="icon-xs" /> Pairs View
           </button>
         </div>
       </div>
@@ -333,9 +411,9 @@ onMounted(() => {
       <div class="slider-row">
         <div class="slider-info">
           <span class="slider-label">
-            Minimum Confidence Threshold: <strong class="threshold-value">{{ minScore }}%</strong>
+            Minimum Match Threshold: <strong class="threshold-value">{{ minScore }}%</strong>
           </span>
-          <span class="slider-hint">Displaying match pairs scored &ge; {{ minScore }}%</span>
+          <span class="slider-hint">Displaying candidate items scored &ge; {{ minScore }}%</span>
         </div>
         <input
           v-model.number="minScore"
@@ -351,26 +429,117 @@ onMounted(() => {
     <!-- State Displays -->
     <div v-if="isLoading" class="loading-state card">
       <div class="spinner"></div>
-      <p>Analyzing item attributes & calculating confidence scores...</p>
+      <p>Analyzing item attributes & ranking candidate matches...</p>
     </div>
 
-    <div v-else-if="filteredMatches.length === 0" class="empty-state card">
+    <div v-else-if="viewMode === 'grouped' && groupedMatches.length === 0" class="empty-state card">
       <Info class="empty-icon" />
       <h3>No Matches Found</h3>
-      <p>No item pairs matched your query with &ge; {{ minScore }}% confidence threshold.</p>
+      <p>No candidate found items matched your criteria with &ge; {{ minScore }}% score.</p>
       <button @click="minScore = 20; searchQuery = ''; selectedCategory = 'all'" class="btn btn-secondary btn-sm">
         Reset Filters
       </button>
     </div>
 
-    <!-- Matches Cards List -->
-    <div v-else class="matches-list" :class="viewMode">
+    <!-- GROUPED VIEW: List of Found Items Ranked by Score for Each Lost Item -->
+    <div v-else-if="viewMode === 'grouped'" class="grouped-matches-list">
       <div
-        v-for="(match, index) in filteredMatches"
+        v-for="group in groupedMatches"
+        :key="group.lostItem.id"
+        class="lost-group-card card card-elevated"
+      >
+        <!-- Lost Item Main Header Box -->
+        <div class="lost-group-header" @click="toggleLostItemExpand(group.lostItem.id)">
+          <div class="lost-main-info">
+            <div class="lost-header-tags">
+              <span class="badge badge-lost">LOST REPORT</span>
+              <span class="category-pill">
+                {{ categoryIconMap[group.lostItem.category] || '📦' }} {{ group.lostItem.category }}
+              </span>
+              <span class="candidates-count-pill">
+                {{ group.candidateMatches.length }} Found Candidate{{ group.candidateMatches.length > 1 ? 's' : '' }} Ranked
+              </span>
+            </div>
+
+            <h3 class="lost-title">{{ group.lostItem.description }}</h3>
+
+            <div class="lost-meta">
+              <span>📍 {{ group.lostItem.location }}</span>
+              <span>📅 {{ formatDate(group.lostItem.dateLost) }}</span>
+              <span v-if="group.lostItem.color">🎨 {{ group.lostItem.color }}</span>
+              <span v-if="group.lostItem.brand">🏷️ {{ group.lostItem.brand }}</span>
+            </div>
+          </div>
+
+          <button class="expand-toggle-btn">
+            <ChevronUp v-if="expandedLostItems[group.lostItem.id]" class="icon-sm" />
+            <ChevronDown v-else class="icon-sm" />
+          </button>
+        </div>
+
+        <!-- Ranked Found Candidates List -->
+        <div v-if="expandedLostItems[group.lostItem.id]" class="candidates-section">
+          <div class="candidates-header">
+            <h4>Ranked Found Items (Sorted by Score)</h4>
+          </div>
+
+          <div class="candidates-list">
+            <div
+              v-for="(match, candidateIdx) in group.candidateMatches"
+              :key="`${match.lostReport.id}-${match.foundReport.id}`"
+              class="candidate-card"
+            >
+              <div class="candidate-top">
+                <div class="candidate-rank-badge">
+                  <span class="rank-number">Rank #{{ candidateIdx + 1 }}</span>
+                  <span class="badge badge-found">FOUND ITEM</span>
+                </div>
+
+                <!-- Match Score Badge -->
+                <div class="score-badge-wrapper" :class="getScoreBadgeClass(match.score)">
+                  <span class="score-percent">{{ match.score }}%</span>
+                  <span class="score-label">MATCH SCORE</span>
+                </div>
+              </div>
+
+              <!-- Found Item Details -->
+              <p class="candidate-desc">{{ match.foundReport.description }}</p>
+
+              <div class="candidate-meta">
+                <span class="meta-item"><MapPin class="icon-xs text-found" /> {{ match.foundReport.locationFound }}</span>
+                <span class="meta-item"><Calendar class="icon-xs" /> {{ formatDate(match.foundReport.dateFound) }}</span>
+                <span v-if="match.foundReport.color" class="meta-tag">🎨 {{ match.foundReport.color }}</span>
+                <span v-if="match.foundReport.brand" class="meta-tag">🏷️ {{ match.foundReport.brand }}</span>
+              </div>
+
+              <!-- Match Reasons Chips -->
+              <div v-if="match.reasons.length > 0" class="candidate-reasons">
+                <span class="reason-label">Match Signals:</span>
+                <span v-for="(reason, rIdx) in match.reasons" :key="rIdx" class="reason-tag">
+                  <CheckCircle2 class="icon-xs" /> {{ reason }}
+                </span>
+              </div>
+
+              <!-- Action -->
+              <div class="candidate-actions">
+                <button @click="openMatchModal(match)" class="btn btn-primary btn-sm">
+                  <span>Claim Item & Contact Finder</span>
+                  <ArrowRight class="icon-xs" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAIRS VIEW (Individual Side-by-Side Cards) -->
+    <div v-else class="matches-list pairs">
+      <div
+        v-for="(match, index) in filteredPairMatches"
         :key="`${match.lostReport.id}-${match.foundReport.id}`"
         class="match-card card card-elevated"
       >
-        <!-- Card Top Bar -->
         <div class="match-card-header">
           <div class="rank-badge">
             <span class="rank-num">#{{ index + 1 }} Pair</span>
@@ -385,51 +554,25 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Comparative Columns -->
         <div class="comparison-row">
-          <!-- Lost Item Box -->
           <div class="item-box lost-box">
             <div class="item-box-header">
               <span class="badge badge-lost">LOST ITEM</span>
               <span class="item-date"><Calendar class="icon-xs" /> {{ formatDate(match.lostReport.dateLost) }}</span>
             </div>
-
             <h4 class="item-desc">{{ match.lostReport.description }}</h4>
-
-            <div class="item-tags">
-              <span v-if="match.lostReport.brand" class="tag-badge">🏷️ {{ match.lostReport.brand }}</span>
-              <span v-if="match.lostReport.color" class="tag-badge">🎨 {{ match.lostReport.color }}</span>
-            </div>
-
             <div class="item-location">
               <MapPin class="icon-xs text-lost" />
               <span>{{ match.lostReport.location }}</span>
             </div>
           </div>
 
-          <!-- Connector Arrow -->
-          <div class="match-connector">
-            <div class="connector-line"></div>
-            <div class="connector-badge">
-              <RotateCcw class="icon-xs" />
-            </div>
-            <div class="connector-line"></div>
-          </div>
-
-          <!-- Found Item Box -->
           <div class="item-box found-box">
             <div class="item-box-header">
               <span class="badge badge-found">FOUND ITEM</span>
               <span class="item-date"><Calendar class="icon-xs" /> {{ formatDate(match.foundReport.dateFound) }}</span>
             </div>
-
             <h4 class="item-desc">{{ match.foundReport.description }}</h4>
-
-            <div class="item-tags">
-              <span v-if="match.foundReport.brand" class="tag-badge">🏷️ {{ match.foundReport.brand }}</span>
-              <span v-if="match.foundReport.color" class="tag-badge">🎨 {{ match.foundReport.color }}</span>
-            </div>
-
             <div class="item-location">
               <MapPin class="icon-xs text-found" />
               <span>{{ match.foundReport.locationFound }}</span>
@@ -437,7 +580,6 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Match Reasons -->
         <div v-if="match.reasons.length > 0" class="match-reasons-bar">
           <span class="reasons-title">Matching Signals:</span>
           <div class="reasons-tags">
@@ -447,7 +589,6 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Card Footer -->
         <div class="match-card-footer">
           <div class="privacy-note">
             <ShieldCheck class="icon-xs text-primary" />
@@ -566,22 +707,6 @@ onMounted(() => {
   padding-bottom: 1.5rem;
   border-bottom: 1px solid var(--border-card);
 }
-
-.header-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.85rem;
-  background-color: var(--primary-light);
-  border: 1px solid var(--primary-border);
-  border-radius: 9999px;
-  font-size: 0.8rem;
-  color: var(--primary-600);
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.badge-icon { width: 15px; height: 15px; color: var(--primary-500); }
 
 .header-stats-chips {
   display: flex;
@@ -752,16 +877,217 @@ onMounted(() => {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Matches List */
-.matches-list {
+/* GROUPED VIEW STYLING */
+.grouped-matches-list {
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
-.matches-list.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+.lost-group-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.lost-group-header {
+  padding: 1.75rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.lost-group-header:hover {
+  background: #ffffff;
+}
+
+.lost-main-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.lost-header-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.category-pill {
+  font-size: 0.775rem;
+  padding: 0.2rem 0.6rem;
+  background: var(--bg-app);
+  border: 1px solid var(--border-card);
+  border-radius: 6px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.candidates-count-pill {
+  font-size: 0.775rem;
+  padding: 0.2rem 0.6rem;
+  background: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  border-radius: 6px;
+  font-weight: 700;
+  color: var(--primary-600);
+}
+
+.lost-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.lost-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.expand-toggle-btn {
+  background: var(--bg-app);
+  border: 1px solid var(--border-card);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+/* Candidates Section */
+.candidates-section {
+  border-top: 1px solid var(--border-card);
+  padding: 1.5rem 1.75rem 1.75rem;
+  background: var(--bg-app);
+}
+
+.candidates-header h4 {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1.25rem;
+}
+
+.candidates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.candidate-card {
+  background: #ffffff;
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.candidate-card:hover {
+  border-color: var(--found-border);
+  transform: translateY(-2px);
+}
+
+.candidate-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.candidate-rank-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.rank-number {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--primary-600);
+}
+
+.candidate-desc {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.candidate-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.meta-tag {
+  font-size: 0.775rem;
+  padding: 0.15rem 0.5rem;
+  background: var(--bg-app);
+  border: 1px solid var(--border-card);
+  border-radius: 4px;
+}
+
+.candidate-reasons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-card);
+}
+
+.reason-label {
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.reason-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.775rem;
+  padding: 0.2rem 0.55rem;
+  background-color: var(--found-bg);
+  border: 1px solid var(--found-border);
+  color: var(--found-600);
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.candidate-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+}
+
+/* PAIRS VIEW STYLING */
+.matches-list.pairs {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 .match-card {
@@ -841,10 +1167,9 @@ onMounted(() => {
   letter-spacing: 0.08em;
 }
 
-/* Comparison Row */
 .comparison-row {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
   align-items: center;
 }
@@ -880,21 +1205,6 @@ onMounted(() => {
   color: var(--text-main);
 }
 
-.item-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.tag-badge {
-  font-size: 0.775rem;
-  padding: 0.2rem 0.5rem;
-  background: #ffffff;
-  border: 1px solid var(--border-card);
-  border-radius: 6px;
-  color: var(--text-secondary);
-}
-
 .item-location {
   display: flex;
   align-items: center;
@@ -907,32 +1217,6 @@ onMounted(() => {
 .text-found { color: var(--found-600); }
 .text-primary { color: var(--primary-600); }
 
-.match-connector {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.connector-line {
-  width: 1px;
-  height: 24px;
-  background-color: var(--border-card);
-}
-
-.connector-badge {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: var(--primary-light);
-  border: 1px solid var(--primary-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary-600);
-}
-
-/* Reasons Bar */
 .match-reasons-bar {
   display: flex;
   align-items: center;
@@ -956,20 +1240,6 @@ onMounted(() => {
   gap: 0.5rem;
 }
 
-.reason-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.775rem;
-  padding: 0.25rem 0.65rem;
-  background-color: var(--primary-light);
-  border: 1px solid var(--primary-border);
-  color: var(--primary-600);
-  border-radius: 6px;
-  font-weight: 600;
-}
-
-/* Footer */
 .match-card-footer {
   display: flex;
   align-items: center;
@@ -1119,7 +1389,6 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .comparison-row { grid-template-columns: 1fr; }
-  .match-connector { transform: rotate(90deg); }
   .modal-pair-summary { grid-template-columns: 1fr; }
   .summary-divider { width: 100%; height: 1px; }
 }
