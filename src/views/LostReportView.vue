@@ -1,0 +1,9 @@
+<script setup lang="ts">
+</script>
+
+<template>
+  <main>
+    <h1>Report Lost Item</h1>
+    <p>Form will be implemented here</p>
+  </main>
+</template>
