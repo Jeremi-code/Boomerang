@@ -30,16 +30,13 @@ const matches = ref<MatchResult[]>([])
 const isLoading = ref(true)
 const error = ref('')
 
-// Filters
 const minScore = ref(30)
 const searchQuery = ref('')
 const selectedCategory = ref<string>('all')
 const viewMode = ref<'grouped' | 'pairs'>('grouped')
 
-// Expanded Lost Items in Grouped View (all open by default)
 const expandedLostItems = ref<Record<string, boolean>>({})
 
-// Modal State
 const selectedMatch = ref<MatchResult | null>(null)
 const showModal = ref(false)
 const copiedField = ref<string>('')
@@ -125,7 +122,6 @@ const loadData = async () => {
     lostItems.value = dbLost
     foundItems.value = dbFound
 
-    // Expand all lost items by default
     lostItems.value.forEach(item => {
       expandedLostItems.value[item.id] = true
     })
@@ -147,7 +143,6 @@ const recalculateMatches = () => {
   matches.value = findMatches(lostItems.value, foundItems.value, 0)
 }
 
-// Grouped by Lost Item computation
 interface GroupedLostMatch {
   lostItem: LostReport
   candidateMatches: MatchResult[]
@@ -156,18 +151,15 @@ interface GroupedLostMatch {
 const groupedMatches = computed<GroupedLostMatch[]>(() => {
   return lostItems.value
     .map(lost => {
-      // Category filter check
       if (selectedCategory.value !== 'all' && lost.category !== selectedCategory.value) {
         return null
       }
 
-      // Calculate matches against all found items
       const candidateMatches = foundItems.value
         .map(found => calculateMatchScore(lost, found))
         .filter(m => m.score >= minScore.value)
         .sort((a, b) => b.score - a.score)
 
-      // Search query filter check
       if (searchQuery.value.trim() !== '') {
         const q = searchQuery.value.toLowerCase()
         const lostMatchesSearch = `${lost.description} ${lost.brand || ''} ${lost.location}`.toLowerCase().includes(q)
@@ -194,7 +186,6 @@ const groupedMatches = computed<GroupedLostMatch[]>(() => {
     .filter((g): g is GroupedLostMatch => g !== null)
 })
 
-// Flat list for pair view
 const filteredPairMatches = computed(() => {
   return matches.value.filter(m => {
     if (m.score < minScore.value) return false
@@ -245,7 +236,6 @@ onMounted(() => {
 
 <template>
   <main class="matches-page">
-    <!-- Header Banner -->
     <div class="matches-header">
       <div class="header-title-box">
         <h1>Potential <span class="gradient-text">Item Matches</span></h1>
@@ -268,10 +258,8 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Controls Toolbar -->
     <div class="controls-bar card card-elevated">
       <div class="controls-grid">
-        <!-- Search -->
         <div class="control-box search-box">
           <Search class="control-icon" />
           <input
@@ -285,7 +273,6 @@ onMounted(() => {
           </button>
         </div>
 
-        <!-- Category Dropdown -->
         <div class="control-box category-select-box">
           <Filter class="control-icon" />
           <select v-model="selectedCategory" class="category-select">
@@ -300,7 +287,6 @@ onMounted(() => {
           </select>
         </div>
 
-        <!-- View Switcher -->
         <div class="view-mode-toggle">
           <button
             class="view-btn"
@@ -321,7 +307,6 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Slider Row -->
       <div class="slider-row">
         <div class="slider-info">
           <span class="slider-label">
@@ -340,18 +325,15 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Error State -->
     <div v-if="error" class="alert alert-error">
       <span>{{ error }}</span>
     </div>
 
-    <!-- Loading State -->
     <div v-if="isLoading" class="loading-state card">
       <div class="spinner"></div>
       <p>Fetching real-time data from Supabase database...</p>
     </div>
 
-    <!-- Completely Empty Database State -->
     <div v-else-if="lostItems.length === 0 && foundItems.length === 0" class="empty-state card">
       <Info class="empty-icon" />
       <h3>No Database Reports Yet</h3>
@@ -368,7 +350,6 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- No Grouped Matches State -->
     <div v-else-if="viewMode === 'grouped' && groupedMatches.length === 0" class="empty-state card">
       <Info class="empty-icon" />
       <h3>No Candidate Matches</h3>
@@ -378,14 +359,12 @@ onMounted(() => {
       </button>
     </div>
 
-    <!-- GROUPED VIEW: List of Found Items Ranked by Score for Each Lost Item -->
     <div v-else-if="viewMode === 'grouped'" class="grouped-matches-list">
       <div
         v-for="group in groupedMatches"
         :key="group.lostItem.id"
         class="lost-group-card card card-elevated"
       >
-        <!-- Lost Item Main Header Box -->
         <div class="lost-group-header" @click="toggleLostItemExpand(group.lostItem.id)">
           <div class="lost-main-info">
             <div class="lost-header-tags">
@@ -414,7 +393,6 @@ onMounted(() => {
           </button>
         </div>
 
-        <!-- Ranked Found Candidates List -->
         <div v-if="expandedLostItems[group.lostItem.id]" class="candidates-section">
           <div class="candidates-header">
             <h4>Ranked Found Items (Sorted by Score)</h4>
@@ -436,14 +414,12 @@ onMounted(() => {
                   <span class="badge badge-found">FOUND ITEM</span>
                 </div>
 
-                <!-- Match Score Badge -->
                 <div class="score-badge-wrapper" :class="getScoreBadgeClass(match.score)">
                   <span class="score-percent">{{ match.score }}%</span>
                   <span class="score-label">MATCH SCORE</span>
                 </div>
               </div>
 
-              <!-- Found Item Details -->
               <p class="candidate-desc">{{ match.foundReport.description }}</p>
 
               <div class="candidate-meta">
@@ -453,7 +429,6 @@ onMounted(() => {
                 <span v-if="match.foundReport.brand" class="meta-tag">🏷️ {{ match.foundReport.brand }}</span>
               </div>
 
-              <!-- Match Reasons Chips -->
               <div v-if="match.reasons.length > 0" class="candidate-reasons">
                 <span class="reason-label">Match Signals:</span>
                 <span v-for="(reason, rIdx) in match.reasons" :key="rIdx" class="reason-tag">
@@ -461,7 +436,6 @@ onMounted(() => {
                 </span>
               </div>
 
-              <!-- Action -->
               <div class="candidate-actions">
                 <button @click="openMatchModal(match)" class="btn btn-primary btn-sm">
                   <span>Claim Item & Contact Finder</span>
@@ -474,7 +448,6 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- PAIRS VIEW (Individual Side-by-Side Cards) -->
     <div v-else class="matches-list pairs">
       <div v-if="filteredPairMatches.length === 0" class="empty-state card">
         <Info class="empty-icon" />
@@ -550,7 +523,6 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Contact & Verification Modal -->
     <div v-if="showModal && selectedMatch" class="modal-overlay" @click.self="closeModal">
       <div class="modal-card card card-elevated">
         <div class="modal-header">

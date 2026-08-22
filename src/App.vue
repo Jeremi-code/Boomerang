@@ -23,7 +23,6 @@ const closeMobileMenu = () => {
   isMobileMenuOpen.value = false
 }
 
-// Close mobile menu on route navigation
 watch(() => route.path, () => {
   closeMobileMenu()
 })
@@ -31,10 +30,8 @@ watch(() => route.path, () => {
 
 <template>
   <div class="app-layout">
-    <!-- Top Glass Navigation Bar -->
     <header class="top-nav">
       <div class="nav-container">
-        <!-- Brand Logo -->
         <RouterLink to="/" class="brand-logo" @click="closeMobileMenu">
           <div class="logo-icon-bg">
             <RotateCcw class="logo-icon" />
@@ -45,7 +42,6 @@ watch(() => route.path, () => {
           </div>
         </RouterLink>
 
-        <!-- Desktop Navigation Menu (Visible on desktop) -->
         <nav class="nav-menu desktop-only">
           <RouterLink to="/" class="nav-item" :class="{ active: route.path === '/' }">
             <Home class="nav-icon" />
@@ -68,7 +64,6 @@ watch(() => route.path, () => {
           </RouterLink>
         </nav>
 
-        <!-- Hamburger Icon Button (Visible on mobile/low width screens) -->
         <button 
           class="hamburger-btn mobile-only" 
           @click="toggleMobileMenu" 
@@ -80,7 +75,6 @@ watch(() => route.path, () => {
         </button>
       </div>
 
-      <!-- Mobile Dropdown Navigation Menu (Lists links when hamburger is active) -->
       <transition name="slide-down">
         <nav v-if="isMobileMenuOpen" class="mobile-nav-drawer mobile-only">
           <RouterLink to="/" class="mobile-nav-item" :class="{ active: route.path === '/' }" @click="closeMobileMenu">
@@ -106,7 +100,6 @@ watch(() => route.path, () => {
       </transition>
     </header>
 
-    <!-- Main View Content -->
     <div class="main-content-wrapper">
       <RouterView v-slot="{ Component }">
         <transition name="fade-slide" mode="out-in">
@@ -115,7 +108,6 @@ watch(() => route.path, () => {
       </RouterView>
     </div>
 
-    <!-- App Footer -->
     <footer class="app-footer">
       <div class="footer-container">
         <div class="footer-left">

@@ -59,20 +59,16 @@ const categories = [
 
 <template>
   <main class="home-page">
-    <!-- Hero Section -->
     <section class="hero-section">
       <div class="hero-container">
-        <!-- Headline -->
         <h1 class="hero-title">
           Reuniting Lost Belongings with <span class="gradient-text">Intelligent Precision</span>
         </h1>
 
-        <!-- Subtitle -->
         <p class="hero-subtitle">
           Lost something around campus or found an item? Boomerang compares descriptions, locations, time windows, and physical attributes to match lost and found reports automatically.
         </p>
 
-        <!-- CTA Action Cards Grid -->
         <div class="hero-cta-grid">
           <RouterLink to="/lost" class="cta-card cta-lost card card-elevated">
             <div class="cta-icon-box lost">
@@ -110,7 +106,6 @@ const categories = [
       </div>
     </section>
 
-    <!-- How it Works Section -->
     <section class="workflow-section">
       <div class="section-header">
         <h2>How Boomerang Works</h2>
@@ -147,7 +142,6 @@ const categories = [
       </div>
     </section>
 
-    <!-- Supported Categories Grid -->
     <section class="categories-section">
       <div class="section-header">
         <h2>Supported Categories</h2>
@@ -171,7 +165,6 @@ const categories = [
       </div>
     </section>
 
-    <!-- Callout Banner -->
     <section class="callout-card card">
       <div class="callout-content">
         <Sparkles class="callout-icon" />

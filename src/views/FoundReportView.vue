@@ -124,14 +124,12 @@ const submitForm = async () => {
 
 <template>
   <main class="report-page">
-    <!-- Header Banner -->
     <div class="page-header">
       <div class="header-content">
         <h1>File a <span class="gradient-text-found">Found Item Report</span></h1>
         <p>Detail the item you found to help locate its rightful owner on campus.</p>
       </div>
 
-      <!-- Quick Switch Pill -->
       <div class="switch-pill card">
         <span>Lost an item instead?</span>
         <RouterLink to="/lost" class="btn btn-lost btn-sm">
@@ -141,7 +139,6 @@ const submitForm = async () => {
       </div>
     </div>
 
-    <!-- Alert Messages -->
     <div v-if="error" class="alert alert-error">
       {{ error }}
     </div>
@@ -151,13 +148,10 @@ const submitForm = async () => {
       {{ success }}
     </div>
 
-    <!-- Form + Live Preview Grid -->
     <div class="form-preview-grid">
-      <!-- Form Column -->
       <form @submit.prevent="submitForm" class="form-card card card-elevated">
         <h3 class="form-section-title">1. Found Item Information</h3>
 
-        <!-- Description -->
         <div class="form-group">
           <label class="form-label" for="description">Item Description *</label>
           <textarea
@@ -170,7 +164,6 @@ const submitForm = async () => {
           ></textarea>
         </div>
 
-        <!-- Category Grid -->
         <div class="form-group">
           <label class="form-label">Category *</label>
           <div class="category-chips-grid">
@@ -188,7 +181,6 @@ const submitForm = async () => {
           </div>
         </div>
 
-        <!-- Color Swatches -->
         <div class="form-group">
           <label class="form-label">Primary Color</label>
           <div class="color-chips-row">
@@ -206,7 +198,6 @@ const submitForm = async () => {
         </div>
 
         <div class="form-row">
-          <!-- Brand -->
           <div class="form-group">
             <label class="form-label" for="brand">Brand / Make</label>
             <input
@@ -218,7 +209,6 @@ const submitForm = async () => {
             />
           </div>
 
-          <!-- Location Found -->
           <div class="form-group">
             <label class="form-label" for="locationFound">Location Found *</label>
             <input
@@ -235,7 +225,6 @@ const submitForm = async () => {
         <h3 class="form-section-title">2. Date & Contact Info</h3>
 
         <div class="form-row">
-          <!-- Date Found -->
           <div class="form-group">
             <label class="form-label" for="dateFound">Date Found *</label>
             <input
@@ -247,7 +236,6 @@ const submitForm = async () => {
             />
           </div>
 
-          <!-- Email -->
           <div class="form-group">
             <label class="form-label" for="contactEmail">Your Contact Email *</label>
             <input
@@ -262,7 +250,6 @@ const submitForm = async () => {
         </div>
 
         <div class="form-row">
-          <!-- Phone -->
           <div class="form-group">
             <label class="form-label" for="contactPhone">Phone (Optional)</label>
             <input
@@ -274,7 +261,6 @@ const submitForm = async () => {
             />
           </div>
 
-          <!-- Holding Spot -->
           <div class="form-group">
             <label class="form-label" for="additionalNotes">Holding Spot / Desk Notes</label>
             <input
@@ -287,7 +273,6 @@ const submitForm = async () => {
           </div>
         </div>
 
-        <!-- Submit Button -->
         <div class="form-actions">
           <button type="submit" class="btn btn-found btn-lg" :disabled="isSubmitting">
             <Sparkles class="icon-sm" />
@@ -296,7 +281,6 @@ const submitForm = async () => {
         </div>
       </form>
 
-      <!-- Live Card Preview Sidebar -->
       <aside class="preview-sidebar">
         <div class="preview-sticky-box card card-elevated">
           <div class="preview-header">
