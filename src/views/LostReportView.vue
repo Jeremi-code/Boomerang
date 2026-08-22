@@ -113,11 +113,9 @@ const submitForm = async () => {
       router.push('/matches')
     }, 1500)
   } catch (err: unknown) {
-    console.warn('Submission fallback redirect:', err)
-    success.value = 'Report submitted! Redirecting to potential matches...'
-    setTimeout(() => {
-      router.push('/matches')
-    }, 1500)
+    const errObj = err as Error
+    console.error('Submission error:', errObj)
+    error.value = errObj.message || 'Failed to submit report. Please check database connection.'
   } finally {
     isSubmitting.value = false
   }
