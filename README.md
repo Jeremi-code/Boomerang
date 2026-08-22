@@ -128,8 +128,6 @@ Each match includes human-readable reasons:
 
 ## What I Would Improve With More Time
 
-## What I Would Improve With More Time
-
 - **Image support** — Allow photo uploads for visual matching
 - **Improved matching** — Add synonyms (e.g., "earbuds" = "earphones")
 - **Semantic search** — Use embeddings for better description matching
