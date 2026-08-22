@@ -128,24 +128,16 @@ Each match includes human-readable reasons:
 
 ## What I Would Improve With More Time
 
-### Short-term (1-2 days)
+## What I Would Improve With More Time
+
 - **Image support** — Allow photo uploads for visual matching
 - **Improved matching** — Add synonyms (e.g., "earbuds" = "earphones")
-- **Date/time pickers** — Better UX for selecting when item was lost/found
-- **Form persistence** — Save draft if user accidentally navigates away
-
-### Medium-term (1 week)
-- **Semantic search** — Use embeddings (OpenAI/Cohere) for better description matching
+- **Semantic search** — Use embeddings for better description matching
 - **User accounts** — Let users track their reports and matches
 - **Notifications** — Email/push when new matches appear
 - **Advanced filtering** — Filter by date range, location, category
-
-### Long-term (1 month)
 - **Mobile app** — Native iOS/Android for better photo capture
 - **Admin dashboard** — For university staff to manage reports
-- **Analytics** — Track match success rates and improve algorithm
-- **Campus integration** — SSO with university authentication
-- **Multi-language support** — For international students
 
 ---
 
