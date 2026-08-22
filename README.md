@@ -237,7 +237,7 @@ Each match includes human-readable reasons:
 
 ## Live Demo
 
-🔗 **[https://boomerang-matcher.vercel.app](https://boomerang-matcher.vercel.app)**
+🔗 **[https://boomerangs.vercel.app](https://boomerangs.vercel.app)**
 
 ---
 
