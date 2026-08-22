@@ -2,6 +2,8 @@
 
 A Vue.js application that identifies potential matches between lost and found item reports at a university using a multi-factor weighted scoring algorithm.
 
+🔗 **Live Demo: [https://boomerangs.vercel.app](https://boomerangs.vercel.app)**
+
 ## Screenshots
 
 ### Home Page
